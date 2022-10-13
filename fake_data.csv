@@ -1,0 +1,13 @@
+SessionID,CustomerID,Activity,TIMESTAMP
+Session1,1,Start_application,2015-11-06 08:07:22.780
+Session1,1,Input_info,2015-11-06 08:07:40.767
+Session1,1,Send_application,2015-11-06 08:07:51.390
+Session1,1,Accept_offer,2015-11-06 08:08:06.003
+Session2,101,Send_application,2016-02-28 08:17:15.947
+Session2,101,Accept_offer,2016-02-28 08:18:31.454
+Session3,224,Input_info,2016-01-14 08:32:11.511
+Session3,224,Send_application,2016-01-14 08:34:12.123
+Session3,224,Accept_offer,2016-01-14 08:37:23.984
+Session4,7653,Start_application,2016-02-20 20:15:10.321
+Session4,7653,Input_info,2016-02-20 20:16:09.647
+Session5,111111,Accept_offer,2017-02-28 08:18:31.454
