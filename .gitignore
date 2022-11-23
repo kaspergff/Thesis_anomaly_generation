@@ -3,3 +3,5 @@ generated_data/*
 *.csv
 *.gz
 gen_sessins/*
+gen_patterns/*
+labeled_data/*
