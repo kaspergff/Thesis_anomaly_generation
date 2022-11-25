@@ -158,3 +158,39 @@ def find_anomalous_sessions(df:pd.DataFrame,swapping_patterns:pd.DataFrame) -> l
   # create a list with all SessionIDs that have an anomaly
   anomaly_sessions = anomalous_session['SessionID'].unique()
   return anomaly_sessions
+
+
+def skip_event(_df:pd.DataFrame,event:str,deviation_rate):
+  df = _df.copy()
+  # print(f"Decrease the probability to reach event: {event} with deviation rate: {deviation_rate}")
+  old_probability = df.loc[:,event]
+  deviation_rate = deviation_rate / 100
+  
+  # decrease the probability
+  for i,prob in old_probability.items():
+    # skip row of event
+    if i == event: continue
+    
+    # start changing the prob 
+    if prob > 0:
+      decrease = prob * (1-deviation_rate)
+      df.loc[i,event] -= prob - decrease      
+      for _i,_prob in df.loc[i,:].items():
+        df.loc[i,_i] += (prob - decrease) * df.loc[event,_i]
+  
+  
+  # change row of event
+  if df.loc[event,event] > 0:
+    decrease = df.loc[event,event] * (1 - deviation_rate)
+    original_value = df.loc[event,event]
+    count = df.loc[event]
+    count = count[count > 0].__len__() - 1
+    
+    for i,prob in  df.loc[event,:].items():
+      if df.loc[event,i] > 0:
+        # Circle case
+        if i == event: 
+          df.loc[event,i] -= prob - decrease
+        else: df.loc[event,i] += (original_value - decrease) / count 
+      
+  return df
