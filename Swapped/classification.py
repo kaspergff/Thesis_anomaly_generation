@@ -35,7 +35,8 @@ df_anomaly_og = df_raw[df_raw["anomaly"] == 1].copy()
 df_normal = df_raw[df_raw["anomaly"] == 0].copy()
 nr_of_sessions_used = 50000
 injection_rate = nr_of_sessions_used / count_normal_raw
-injection_amount = int(injection_rate * count_anomaly_raw)
+# injection_amount = int(injection_rate * count_anomaly_raw)
+injection_amount = 50
 
 # get 20 random sessionIDs from the anomaly dataset
 anomaly_sessionIDs = random.sample(list(df_anomaly_og["SessionID"].unique()), injection_amount)
@@ -78,7 +79,7 @@ def create_transition_df(_df:pd.DataFrame) -> pd.DataFrame:
 def transition_count(_df):
   # function that counts the number of times a all transitions occurs in a session
   df = _df.copy()
-  df = df.groupby("SessionID")["transition"].value_counts().unstack().fillna(0)
+  df = df.groupby("SessionID")["Activity"].value_counts().unstack().fillna(0)
   return df
   
 def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
@@ -90,8 +91,8 @@ def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
   df["anomaly"] = df["anomaly"].fillna(0)
   return df
 
-df_trans = create_transition_df(df_50k)
-base_data_1 = transition_count(df_trans)
+# df_trans = create_transition_df(df_50k)
+base_data_1 = transition_count(df_50k)
 base_data = add_anomaly_col(base_data_1, df_anomaly_og)
 
 
@@ -111,7 +112,7 @@ X_train_BASE, X_test_BASE, y_train_BASE, y_test_BASE = split_data(base_data)
 
 
 # import the generated sessions:
-ses_amount = 1000
+ses_amount = 5000
 base_path = f"C:/Users/krdeg/dev/ozp/Swapped/gen_sessions/{str(ses_amount)}/"
 
 gen_sessions_paths = [
@@ -132,12 +133,7 @@ gen_sessions_paths = [
 
 
     
-precision_score_list_total = []
-accuracy_score_list_total = []
-balanced_accuracy_score_list_total = []
-recall_accuracy_score_list_total = []
-roc_auc_score_list_total = []
-roc_curve_list_total = []
+res_list = []
 
 for sessions in gen_sessions_paths:
 
@@ -148,8 +144,8 @@ for sessions in gen_sessions_paths:
     # rename 
     cvs = cvs.rename(columns={'URL_FILE':'Activity'})
     
-    df_trans_an = create_transition_df(cvs)
-    an_df = transition_count(df_trans_an)
+    # df_trans_an = create_transition_df(cvs)
+    an_df = transition_count(cvs)
     if 'SessionID' in an_df.index:
         an_df = an_df.drop(index=["SessionID"])
 
@@ -157,12 +153,7 @@ for sessions in gen_sessions_paths:
     ready_df['anomaly'] = 1
     
     
-    precision_score_list = []
-    accuracy_score_list = []
-    balanced_accuracy_score_list = []
-    recall_accuracy_score_list = []
-    roc_auc_score_list = []
-    roc_curve_list = []
+    
     
     for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
         
@@ -217,37 +208,25 @@ for sessions in gen_sessions_paths:
         
         fpr, tpr, thresholds = roc_curve(y_true=y_test_BASE,y_score = predictions)
         
+        res_dict = {}
         
-#         precision_score_list.append({'amount_gen': amount_gen, 'precision_score': _precc})
-#         accuracy_score_list.append({'amount_gen': amount_gen, 'accuracy_score': acc})
-#         balanced_accuracy_score_list.append({'amount_gen': amount_gen, 'balanced_accuracy_score': ball_acc})
-#         recall_accuracy_score_list.append({'amount_gen': amount_gen, 'recall_score': _recall})
-#         roc_auc_score_list.append({'amount_gen': amount_gen, 'roc_auc_score': _roc_auc_score})
-#         roc_curve_list.append({'amount_gen': amount_gen, 'fpr': fpr, 'tpr': tpr, 'thresholds': thresholds})
+        res_dict.update({"sessions": sessions,
+                         'amount_gen': amount_gen,
+                         'accuracy_score': acc,
+                         'ball_acc': ball_acc,
+                         'precision': _precc,
+                         'recall': _recall,
+                         'roc_auc_score': _roc_auc_score,
+                         'fpr': fpr,
+                          'tpf': tpr,
+                          'thresholds': thresholds                     
+                         })
         
-#         print()
-#     precision_score_list_total.append({'sessions': sessions, 'precision_score_list': precision_score_list})
-#     accuracy_score_list_total.append({'sessions': sessions, 'accuracy_score_list': accuracy_score_list})
-#     balanced_accuracy_score_list_total.append({'sessions': sessions, 'balanced_accuracy_score_list': balanced_accuracy_score_list})
-#     recall_accuracy_score_list_total.append({'sessions': sessions, 'recall_accuracy_score_list': recall_accuracy_score_list})
-#     roc_auc_score_list_total.append({'sessions': sessions, 'roc_auc_score_list': roc_auc_score_list})
-#     roc_curve_list_total.append({'sessions': sessions, 'roc_curve_list': roc_curve_list})
+        print()
+        res_list.append(res_dict)
     
     
-    
-    
-    
-# precision_score_list_total_df = pd.DataFrame(precision_score_list_total)
-# accuracy_score_list_total_df = pd.DataFrame(accuracy_score_list_total)
-# balanced_accuracy_score_list_total_df = pd.DataFrame(balanced_accuracy_score_list_total)
-# recall_accuracy_score_list_total_df = pd.DataFrame(recall_accuracy_score_list_total)
-# roc_auc_score_list_total_df = pd.DataFrame(roc_auc_score_list_total)
-# roc_curve_list_total_df = pd.DataFrame(roc_curve_list_total)
+res_df = pd.DataFrame(res_list)
 
-
-# precision_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/precision_score_list_total_df.csv')
-# accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/accuracy_score_list_total_df.csv')
-# balanced_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/balanced_accuracy_score_list_total_df.csv')
-# recall_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/recall_accuracy_score_list_total_df.csv')
-# roc_auc_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_auc_score_list_total_df.csv')
-# roc_curve_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_curve_list_total_df.csv')
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Swapped/results/Activity.csv")
+  

@@ -14,7 +14,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from sklearn.metrics import classification_report
 
-df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Skipping/labeled_data/labeled_df_15.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Skipping/labeled_data/skipping.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
                     usecols=['SessionID','Activity','anomaly'])
 
 df_raw["anomaly"] = df_raw["anomaly"].astype(int)
@@ -35,7 +35,8 @@ df_anomaly_og = df_raw[df_raw["anomaly"] == 1].copy()
 df_normal = df_raw[df_raw["anomaly"] == 0].copy()
 nr_of_sessions_used = 50000
 injection_rate = nr_of_sessions_used / count_normal_raw
-injection_amount = int(injection_rate * count_anomaly_raw)
+# injection_amount = int(injection_rate * count_anomaly_raw)
+injection_amount = count_anomaly_raw
 
 # get 20 random sessionIDs from the anomaly dataset
 anomaly_sessionIDs = random.sample(list(df_anomaly_og["SessionID"].unique()), injection_amount)
@@ -126,17 +127,8 @@ gen_sessions_paths = [
   # base_path + '100_10000.csv',
   # 'C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/only_patterns.csv'
 ]
-
-
-
-
     
-precision_score_list_total = []
-accuracy_score_list_total = []
-balanced_accuracy_score_list_total = []
-recall_accuracy_score_list_total = []
-roc_auc_score_list_total = []
-roc_curve_list_total = []
+res_list = []
 
 for sessions in gen_sessions_paths:
 
@@ -156,12 +148,7 @@ for sessions in gen_sessions_paths:
     ready_df['anomaly'] = 1
     
     
-    precision_score_list = []
-    accuracy_score_list = []
-    balanced_accuracy_score_list = []
-    recall_accuracy_score_list = []
-    roc_auc_score_list = []
-    roc_curve_list = []
+    
     
     for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
         
@@ -216,37 +203,25 @@ for sessions in gen_sessions_paths:
         
         fpr, tpr, thresholds = roc_curve(y_true=y_test_BASE,y_score = predictions)
         
+        res_dict = {}
         
-        precision_score_list.append({'amount_gen': amount_gen, 'precision_score': _precc})
-        accuracy_score_list.append({'amount_gen': amount_gen, 'accuracy_score': acc})
-        balanced_accuracy_score_list.append({'amount_gen': amount_gen, 'balanced_accuracy_score': ball_acc})
-        recall_accuracy_score_list.append({'amount_gen': amount_gen, 'recall_score': _recall})
-        roc_auc_score_list.append({'amount_gen': amount_gen, 'roc_auc_score': _roc_auc_score})
-        roc_curve_list.append({'amount_gen': amount_gen, 'fpr': fpr, 'tpr': tpr, 'thresholds': thresholds})
+        res_dict.update({"sessions": sessions,
+                         'amount_gen': amount_gen,
+                         'accuracy_score': acc,
+                         'ball_acc': ball_acc,
+                         'precision': _precc,
+                         'recall': _recall,
+                         'roc_auc_score': _roc_auc_score,
+                         'fpr': fpr,
+                          'tpf': tpr,
+                          'thresholds': thresholds                     
+                         })
         
         print()
-    precision_score_list_total.append({'sessions': sessions, 'precision_score_list': precision_score_list})
-    accuracy_score_list_total.append({'sessions': sessions, 'accuracy_score_list': accuracy_score_list})
-    balanced_accuracy_score_list_total.append({'sessions': sessions, 'balanced_accuracy_score_list': balanced_accuracy_score_list})
-    recall_accuracy_score_list_total.append({'sessions': sessions, 'recall_accuracy_score_list': recall_accuracy_score_list})
-    roc_auc_score_list_total.append({'sessions': sessions, 'roc_auc_score_list': roc_auc_score_list})
-    roc_curve_list_total.append({'sessions': sessions, 'roc_curve_list': roc_curve_list})
+        res_list.append(res_dict)
     
     
-    
-    
-    
-precision_score_list_total_df = pd.DataFrame(precision_score_list_total)
-accuracy_score_list_total_df = pd.DataFrame(accuracy_score_list_total)
-balanced_accuracy_score_list_total_df = pd.DataFrame(balanced_accuracy_score_list_total)
-recall_accuracy_score_list_total_df = pd.DataFrame(recall_accuracy_score_list_total)
-roc_auc_score_list_total_df = pd.DataFrame(roc_auc_score_list_total)
-roc_curve_list_total_df = pd.DataFrame(roc_curve_list_total)
+res_df = pd.DataFrame(res_list)
 
-
-precision_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/precision_score_list_total_df.csv')
-accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/accuracy_score_list_total_df.csv')
-balanced_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/balanced_accuracy_score_list_total_df.csv')
-recall_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/recall_accuracy_score_list_total_df.csv')
-roc_auc_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_auc_score_list_total_df.csv')
-roc_curve_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_curve_list_total_df.csv')
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Skipping/results/results_sample.csv")
+  

@@ -14,7 +14,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from sklearn.metrics import classification_report
 
-df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Replaced/labeled_data/Replaced.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Skipping/labeled_data/skipping.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
                     usecols=['SessionID','Activity','anomaly'])
 
 df_raw["anomaly"] = df_raw["anomaly"].astype(int)
@@ -35,8 +35,8 @@ df_anomaly_og = df_raw[df_raw["anomaly"] == 1].copy()
 df_normal = df_raw[df_raw["anomaly"] == 0].copy()
 nr_of_sessions_used = 50000
 injection_rate = nr_of_sessions_used / count_normal_raw
-# injection_amount = int(injection_rate * count_anomaly_raw)
-injection_amount = 50
+injection_amount = int(injection_rate * count_anomaly_raw)
+# injection_amount = count_anomaly_raw
 
 # get 20 random sessionIDs from the anomaly dataset
 anomaly_sessionIDs = random.sample(list(df_anomaly_og["SessionID"].unique()), injection_amount)
@@ -79,7 +79,7 @@ def create_transition_df(_df:pd.DataFrame) -> pd.DataFrame:
 def transition_count(_df):
   # function that counts the number of times a all transitions occurs in a session
   df = _df.copy()
-  df = df.groupby("SessionID")["transition"].value_counts().unstack().fillna(0)
+  df = df.groupby("SessionID")["Activity"].value_counts().unstack().fillna(0)
   return df
   
 def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
@@ -91,8 +91,8 @@ def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
   df["anomaly"] = df["anomaly"].fillna(0)
   return df
 
-df_trans = create_transition_df(df_50k)
-base_data_1 = transition_count(df_trans)
+# df_trans = create_transition_df(df_50k)
+base_data_1 = transition_count(df_50k)
 base_data = add_anomaly_col(base_data_1, df_anomaly_og)
 
 
@@ -104,7 +104,7 @@ def split_data(_df):
   df = _df.copy()
   X = df.drop(columns=["anomaly"])
   y = df["anomaly"]
-  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42)
+  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=21)
   return X_train, X_test, y_train, y_test
 
 # Base test and train data
@@ -112,7 +112,7 @@ X_train_BASE, X_test_BASE, y_train_BASE, y_test_BASE = split_data(base_data)
 
 # import the generated sessions:
 ses_amount = 5000
-base_path = f"C:/Users/krdeg/dev/ozp/Replaced/gen_sessions/{str(ses_amount)}/"
+base_path = f"C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/{str(ses_amount)}/"
 
 gen_sessions_paths = [
   base_path + f'5_{ses_amount}.csv',
@@ -125,105 +125,103 @@ gen_sessions_paths = [
   
   # base_path + '75_10000.csv',
   # base_path + '100_10000.csv',
-  # 'C:/Users/krdeg/dev/ozp/Replaced/gen_sessions/only_patterns.csv'
+  # 'C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/only_patterns.csv'
 ]
-
-
-
-
+    
 res_list = []
 
 for sessions in gen_sessions_paths:
 
-  # build the dataFrame
-  cvs = pd.read_csv(sessions)
-  # check if column Unnamed: 0 exists
-  if "Unnamed: 0" in cvs.columns : cvs = cvs.drop(columns=["Unnamed: 0"])
-  # rename 
-  cvs = cvs.rename(columns={'URL_FILE':'Activity'})
-  
-  df_trans_an = create_transition_df(cvs)
-  an_df = transition_count(df_trans_an)
-  if 'SessionID' in an_df.index:
-      an_df = an_df.drop(index=["SessionID"])
+    # build the dataFrame
+    cvs = pd.read_csv(sessions)
+    # check if column Unnamed: 0 exists
+    if "Unnamed: 0" in cvs.columns : cvs = cvs.drop(columns=["Unnamed: 0"])
+    # rename 
+    cvs = cvs.rename(columns={'URL_FILE':'Activity'})
+    
+    # df_trans_an = create_transition_df(cvs)
+    an_df = transition_count(cvs)
+    if 'SessionID' in an_df.index:
+        an_df = an_df.drop(index=["SessionID"])
 
-  ready_df = an_df.copy()
-  ready_df['anomaly'] = 1
-  
-  
-  
-  
-  for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
-      
-      if amount_gen != 0 : 
-        df_gen = ready_df.head(amount_gen)
-      else: 
-        df_gen = pd.DataFrame()
-        df_gen["anomaly"] = 1
+    ready_df = an_df.copy()
+    ready_df['anomaly'] = 1
+    
+    
+    
+    
+    for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
         
-      # get the amount of rows in the generated data
-      X_train = X_train_BASE.copy()
-      X_test = X_test_BASE.copy()
-      y_train = y_train_BASE.copy()
-      
-      # Add the generated anomalies to the training dataset
-      X_train_extra = pd.concat([X_train, df_gen.drop(columns=["anomaly"])]).fillna(0)
-      y_train_extra = pd.concat([y_train, df_gen["anomaly"]])        
+        if amount_gen != 0 : 
+          df_gen = ready_df.head(amount_gen)
+        else: 
+          df_gen = pd.DataFrame()
+          df_gen["anomaly"] = 1
+          
+        # get the amount of rows in the generated data
+        X_train = X_train_BASE.copy()
+        X_test = X_test_BASE.copy()
+        y_train = y_train_BASE.copy()
+        
+        # Add the generated anomalies to the training dataset
+        X_train_extra = pd.concat([X_train, df_gen.drop(columns=["anomaly"])]).fillna(0)
+        y_train_extra = pd.concat([y_train, df_gen["anomaly"]])        
 
-      #Make sure that both dataframes have the same columns
-      for column_name in X_train_extra.columns:
-          if column_name not in X_test.columns:
-              X_test[column_name] = 0
+        #Make sure that both dataframes have the same columns
+        for column_name in X_train_extra.columns:
+            if column_name not in X_test.columns:
+                X_test[column_name] = 0
 
-      #Make sure that both dataframes have the same columns
-      for column_name in X_test.columns:
-          if column_name not in X_train_extra.columns:
-              X_test.drop(columns=[column_name], inplace=True)
-      
-      clf = tree.DecisionTreeClassifier(random_state=42)
-      clf.fit(X_train_extra, y_train_extra)
-  
-      predictions = clf.predict(X_test)
-      # test_predictions = clf.predict(X_train_extra)
-      
-      #AUC predict
-      print(sessions, amount_gen)
-      
-      acc = accuracy_score(y_true=y_test_BASE,y_pred = predictions)
-      print(f'test data accuracy_score: {acc}')
-      
-      ball_acc = balanced_accuracy_score(y_true=y_test_BASE,y_pred = predictions)
-      print(f'test data balanced_accuracy_score: {ball_acc}')
-      
-      _precc = precision_score(y_true=y_test_BASE,y_pred = predictions)
-      print(f'test data precision_score: {_precc}')
-      
-      _recall = recall_score(y_true=y_test_BASE,y_pred = predictions)
-      print(f'test data recall_score: {_recall}')
-      
-      _roc_auc_score = roc_auc_score(y_true=y_test_BASE,y_score = predictions)
-      print(f'test data auc_score: {_roc_auc_score}')
-      
-      fpr, tpr, thresholds = roc_curve(y_true=y_test_BASE,y_score = predictions)
-      
-      res_dict = {}
-      
-      res_dict.update({"sessions": sessions,
-                        'amount_gen': amount_gen,
-                        'accuracy_score': acc,
-                        'ball_acc': ball_acc,
-                        'precision': _precc,
-                        'recall': _recall,
-                        'roc_auc_score': _roc_auc_score,
-                        'fpr': fpr,
-                        'tpf': tpr,
-                        'thresholds': thresholds                     
-                        })
-      
-      print()
-      res_list.append(res_dict)
-  
-  
+        #Make sure that both dataframes have the same columns
+        for column_name in X_test.columns:
+            if column_name not in X_train_extra.columns:
+                X_test.drop(columns=[column_name], inplace=True)
+        
+        clf = tree.DecisionTreeClassifier(random_state=42)
+        clf.fit(X_train_extra, y_train_extra)
+    
+        predictions = clf.predict(X_test)
+        # test_predictions = clf.predict(X_train_extra)
+        
+        #AUC predict
+        print(sessions, amount_gen)
+        
+        acc = accuracy_score(y_true=y_test_BASE,y_pred = predictions)
+        print(f'test data accuracy_score: {acc}')
+        
+        ball_acc = balanced_accuracy_score(y_true=y_test_BASE,y_pred = predictions)
+        print(f'test data balanced_accuracy_score: {ball_acc}')
+        
+        _precc = precision_score(y_true=y_test_BASE,y_pred = predictions)
+        print(f'test data precision_score: {_precc}')
+        
+        _recall = recall_score(y_true=y_test_BASE,y_pred = predictions)
+        print(f'test data recall_score: {_recall}')
+        
+        _roc_auc_score = roc_auc_score(y_true=y_test_BASE,y_score = predictions)
+        print(f'test data auc_score: {_roc_auc_score}')
+        
+        fpr, tpr, thresholds = roc_curve(y_true=y_test_BASE,y_score = predictions)
+        
+        res_dict = {}
+        
+        res_dict.update({"sessions": sessions,
+                         'amount_gen': amount_gen,
+                         'accuracy_score': acc,
+                         'ball_acc': ball_acc,
+                         'precision': _precc,
+                         'recall': _recall,
+                         'roc_auc_score': _roc_auc_score,
+                         'fpr': fpr,
+                          'tpf': tpr,
+                          'thresholds': thresholds                     
+                         })
+        
+        print()
+        res_list.append(res_dict)
+    
+    
 res_df = pd.DataFrame(res_list)
 
-res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Replaced/results/results.csv")
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Skipping/results/activity_results.csv")
+  
