@@ -14,7 +14,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from sklearn.metrics import classification_report
 
-df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Skipping/labeled_data/labeled_df_15.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Swapped/labeled_data/Swapped.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
                     usecols=['SessionID','Activity','anomaly'])
 
 df_raw["anomaly"] = df_raw["anomaly"].astype(int)
@@ -103,15 +103,16 @@ def split_data(_df):
   df = _df.copy()
   X = df.drop(columns=["anomaly"])
   y = df["anomaly"]
-  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42)
+  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=99)
   return X_train, X_test, y_train, y_test
 
 # Base test and train data
 X_train_BASE, X_test_BASE, y_train_BASE, y_test_BASE = split_data(base_data)
 
+
 # import the generated sessions:
-ses_amount = 5000
-base_path = f"C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/{str(ses_amount)}/"
+ses_amount = 1000
+base_path = f"C:/Users/krdeg/dev/ozp/Swapped/gen_sessions/{str(ses_amount)}/"
 
 gen_sessions_paths = [
   base_path + f'5_{ses_amount}.csv',
@@ -217,36 +218,36 @@ for sessions in gen_sessions_paths:
         fpr, tpr, thresholds = roc_curve(y_true=y_test_BASE,y_score = predictions)
         
         
-        precision_score_list.append({'amount_gen': amount_gen, 'precision_score': _precc})
-        accuracy_score_list.append({'amount_gen': amount_gen, 'accuracy_score': acc})
-        balanced_accuracy_score_list.append({'amount_gen': amount_gen, 'balanced_accuracy_score': ball_acc})
-        recall_accuracy_score_list.append({'amount_gen': amount_gen, 'recall_score': _recall})
-        roc_auc_score_list.append({'amount_gen': amount_gen, 'roc_auc_score': _roc_auc_score})
-        roc_curve_list.append({'amount_gen': amount_gen, 'fpr': fpr, 'tpr': tpr, 'thresholds': thresholds})
+#         precision_score_list.append({'amount_gen': amount_gen, 'precision_score': _precc})
+#         accuracy_score_list.append({'amount_gen': amount_gen, 'accuracy_score': acc})
+#         balanced_accuracy_score_list.append({'amount_gen': amount_gen, 'balanced_accuracy_score': ball_acc})
+#         recall_accuracy_score_list.append({'amount_gen': amount_gen, 'recall_score': _recall})
+#         roc_auc_score_list.append({'amount_gen': amount_gen, 'roc_auc_score': _roc_auc_score})
+#         roc_curve_list.append({'amount_gen': amount_gen, 'fpr': fpr, 'tpr': tpr, 'thresholds': thresholds})
         
-        print()
-    precision_score_list_total.append({'sessions': sessions, 'precision_score_list': precision_score_list})
-    accuracy_score_list_total.append({'sessions': sessions, 'accuracy_score_list': accuracy_score_list})
-    balanced_accuracy_score_list_total.append({'sessions': sessions, 'balanced_accuracy_score_list': balanced_accuracy_score_list})
-    recall_accuracy_score_list_total.append({'sessions': sessions, 'recall_accuracy_score_list': recall_accuracy_score_list})
-    roc_auc_score_list_total.append({'sessions': sessions, 'roc_auc_score_list': roc_auc_score_list})
-    roc_curve_list_total.append({'sessions': sessions, 'roc_curve_list': roc_curve_list})
+#         print()
+#     precision_score_list_total.append({'sessions': sessions, 'precision_score_list': precision_score_list})
+#     accuracy_score_list_total.append({'sessions': sessions, 'accuracy_score_list': accuracy_score_list})
+#     balanced_accuracy_score_list_total.append({'sessions': sessions, 'balanced_accuracy_score_list': balanced_accuracy_score_list})
+#     recall_accuracy_score_list_total.append({'sessions': sessions, 'recall_accuracy_score_list': recall_accuracy_score_list})
+#     roc_auc_score_list_total.append({'sessions': sessions, 'roc_auc_score_list': roc_auc_score_list})
+#     roc_curve_list_total.append({'sessions': sessions, 'roc_curve_list': roc_curve_list})
     
     
     
     
     
-precision_score_list_total_df = pd.DataFrame(precision_score_list_total)
-accuracy_score_list_total_df = pd.DataFrame(accuracy_score_list_total)
-balanced_accuracy_score_list_total_df = pd.DataFrame(balanced_accuracy_score_list_total)
-recall_accuracy_score_list_total_df = pd.DataFrame(recall_accuracy_score_list_total)
-roc_auc_score_list_total_df = pd.DataFrame(roc_auc_score_list_total)
-roc_curve_list_total_df = pd.DataFrame(roc_curve_list_total)
+# precision_score_list_total_df = pd.DataFrame(precision_score_list_total)
+# accuracy_score_list_total_df = pd.DataFrame(accuracy_score_list_total)
+# balanced_accuracy_score_list_total_df = pd.DataFrame(balanced_accuracy_score_list_total)
+# recall_accuracy_score_list_total_df = pd.DataFrame(recall_accuracy_score_list_total)
+# roc_auc_score_list_total_df = pd.DataFrame(roc_auc_score_list_total)
+# roc_curve_list_total_df = pd.DataFrame(roc_curve_list_total)
 
 
-precision_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/precision_score_list_total_df.csv')
-accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/accuracy_score_list_total_df.csv')
-balanced_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/balanced_accuracy_score_list_total_df.csv')
-recall_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/recall_accuracy_score_list_total_df.csv')
-roc_auc_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_auc_score_list_total_df.csv')
-roc_curve_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_curve_list_total_df.csv')
+# precision_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/precision_score_list_total_df.csv')
+# accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/accuracy_score_list_total_df.csv')
+# balanced_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/balanced_accuracy_score_list_total_df.csv')
+# recall_accuracy_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/recall_accuracy_score_list_total_df.csv')
+# roc_auc_score_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_auc_score_list_total_df.csv')
+# roc_curve_list_total_df.to_csv('C:/Users/krdeg/dev/ozp/Skipping/results/roc_curve_list_total_df.csv')

@@ -114,17 +114,17 @@ ses_amount = 1000
 base_path = f"C:/Users/krdeg/dev/ozp/Replaced/gen_sessions/{str(ses_amount)}/"
 
 gen_sessions_paths = [
-  # base_path + f'5_{ses_amount}.csv',
-  # base_path + f'10_{ses_amount}.csv',
-  # base_path + f'25_{ses_amount}.csv',
-  # base_path + f'50_{ses_amount}.csv',
-  # base_path + f'75_{ses_amount}.csv',
-  # base_path + f'100_{ses_amount}.csv',
+  base_path + f'5_{ses_amount}.csv',
+  base_path + f'10_{ses_amount}.csv',
+  base_path + f'25_{ses_amount}.csv',
+  base_path + f'50_{ses_amount}.csv',
+  base_path + f'75_{ses_amount}.csv',
+  base_path + f'100_{ses_amount}.csv',
   # base_path + 'an.csv',
   
   # base_path + '75_10000.csv',
   # base_path + '100_10000.csv',
-  'C:/Users/krdeg/dev/ozp/Replaced/gen_sessions/only_patterns.csv'
+  # 'C:/Users/krdeg/dev/ozp/Replaced/gen_sessions/only_patterns.csv'
 ]
 
 
