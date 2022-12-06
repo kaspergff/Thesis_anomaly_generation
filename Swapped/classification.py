@@ -79,7 +79,7 @@ def create_transition_df(_df:pd.DataFrame) -> pd.DataFrame:
 def transition_count(_df):
   # function that counts the number of times a all transitions occurs in a session
   df = _df.copy()
-  df = df.groupby("SessionID")["Activity"].value_counts().unstack().fillna(0)
+  df = df.groupby("SessionID")["transition"].value_counts().unstack().fillna(0)
   return df
   
 def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
@@ -91,8 +91,8 @@ def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
   df["anomaly"] = df["anomaly"].fillna(0)
   return df
 
-# df_trans = create_transition_df(df_50k)
-base_data_1 = transition_count(df_50k)
+df_trans = create_transition_df(df_50k)
+base_data_1 = transition_count(df_trans)
 base_data = add_anomaly_col(base_data_1, df_anomaly_og)
 
 
@@ -116,17 +116,17 @@ ses_amount = 5000
 base_path = f"C:/Users/krdeg/dev/ozp/Swapped/gen_sessions/{str(ses_amount)}/"
 
 gen_sessions_paths = [
-  base_path + f'5_{ses_amount}.csv',
-  base_path + f'10_{ses_amount}.csv',
-  base_path + f'25_{ses_amount}.csv',
-  base_path + f'50_{ses_amount}.csv',
-  base_path + f'75_{ses_amount}.csv',
-  base_path + f'100_{ses_amount}.csv',
+  # base_path + f'5_{ses_amount}.csv',
+  # base_path + f'10_{ses_amount}.csv',
+  # base_path + f'25_{ses_amount}.csv',
+  # base_path + f'50_{ses_amount}.csv',
+  # base_path + f'75_{ses_amount}.csv',
+  # base_path + f'100_{ses_amount}.csv',
   # base_path + 'an.csv',
   
   # base_path + '75_10000.csv',
   # base_path + '100_10000.csv',
-  # 'C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/only_patterns.csv'
+  'C:/Users/krdeg/dev/ozp/Swapped/gen_sessions/only_patterns.csv'
 ]
 
 
@@ -144,8 +144,8 @@ for sessions in gen_sessions_paths:
     # rename 
     cvs = cvs.rename(columns={'URL_FILE':'Activity'})
     
-    # df_trans_an = create_transition_df(cvs)
-    an_df = transition_count(cvs)
+    df_trans_an = create_transition_df(cvs)
+    an_df = transition_count(df_trans_an)
     if 'SessionID' in an_df.index:
         an_df = an_df.drop(index=["SessionID"])
 
@@ -155,7 +155,7 @@ for sessions in gen_sessions_paths:
     
     
     
-    for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
+    for amount_gen in [60]:
         
         if amount_gen != 0 : 
           df_gen = ready_df.head(amount_gen)
@@ -228,5 +228,5 @@ for sessions in gen_sessions_paths:
     
 res_df = pd.DataFrame(res_list)
 
-res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Swapped/results/Activity.csv")
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Swapped/results/Transitions_onlypatterns.csv")
   

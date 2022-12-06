@@ -115,17 +115,17 @@ ses_amount = 5000
 base_path = f"C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/{str(ses_amount)}/"
 
 gen_sessions_paths = [
-  base_path + f'5_{ses_amount}.csv',
-  base_path + f'10_{ses_amount}.csv',
-  base_path + f'25_{ses_amount}.csv',
-  base_path + f'50_{ses_amount}.csv',
-  base_path + f'75_{ses_amount}.csv',
-  base_path + f'100_{ses_amount}.csv',
+  # base_path + f'5_{ses_amount}.csv',
+  # base_path + f'10_{ses_amount}.csv',
+  # base_path + f'25_{ses_amount}.csv',
+  # base_path + f'50_{ses_amount}.csv',
+  # base_path + f'75_{ses_amount}.csv',
+  # base_path + f'100_{ses_amount}.csv',
   # base_path + 'an.csv',
   
   # base_path + '75_10000.csv',
   # base_path + '100_10000.csv',
-  # 'C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/only_patterns.csv'
+  'C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/only_patterns.csv'
 ]
     
 res_list = []
@@ -150,7 +150,7 @@ for sessions in gen_sessions_paths:
     
     
     
-    for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
+    for amount_gen in [30]:
         
         if amount_gen != 0 : 
           df_gen = ready_df.head(amount_gen)
@@ -223,5 +223,5 @@ for sessions in gen_sessions_paths:
     
 res_df = pd.DataFrame(res_list)
 
-res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Skipping/results/activity_results.csv")
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Skipping/results/activity_onlypatterns.csv")
   
