@@ -1,5 +1,4 @@
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 def warn(*args, **kwargs):
     pass
@@ -9,59 +8,34 @@ from sklearn.model_selection import train_test_split
 # imprt tree
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, precision_score, recall_score, roc_auc_score, roc_curve
 from sklearn import tree
-# import metrics
-from sklearn.preprocessing import OneHotEncoder
 
-from sklearn.metrics import classification_report
 
-df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Swapped/labeled_data/Swapped.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+print('import data')
+print()
+# import labelled data from all 3 patterns
+df_raw = pd.read_csv('C:/Users/krdeg/dev/ozp/Skipping/labeled_data/skipping.csv', encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
                     usecols=['SessionID','Activity','anomaly'])
+skip_ano = df_raw[df_raw["anomaly"] == 1].copy()
+skip_sessionID = skip_ano["SessionID"].unique()
 
-df_raw["anomaly"] = df_raw["anomaly"].astype(int)
+df_raw = pd.read_csv('C:/Users/krdeg/dev/ozp/Replaced/labeled_data/Replaced.csv', encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+                    usecols=['SessionID','Activity','anomaly'])
+replaced_ano = df_raw[df_raw["anomaly"] == 1].copy()
+replaced_SessionID = replaced_ano["SessionID"].unique()
 
-# count the number of unique SessionID where anomaly == True
-count_anomaly_raw = df_raw[df_raw["anomaly"] == 1]["SessionID"].nunique()
-count_normal_raw = df_raw[df_raw["anomaly"] == 0]["SessionID"].nunique()
-print(f'Amount of anomalous sessions in the dataset:   {count_anomaly_raw}' )
-print(f'Amount of normal sessions in the dataset:      {count_normal_raw}')
-print(f'total sessions in the dataset:                 {count_anomaly_raw + count_normal_raw}')
-distribution =  count_anomaly_raw / count_normal_raw 
-print(f'Distribution:                                  {distribution * 100} %')
+df_raw = pd.read_csv('C:/Users/krdeg/dev/ozp/Swapped/labeled_data/Swapped.csv', encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+                    usecols=['SessionID','Activity','anomaly'])
+swapped_ano = df_raw[df_raw["anomaly"] == 1].copy()
+swapped_SessionID = swapped_ano["SessionID"].unique()
 
-import random
-random.seed(101)
+print(f'skip_sessionID: {len(skip_sessionID)}')
+print(f'replaced_SessionID: {len(replaced_SessionID)}')
+print(f'swap_sessionID: {len(swapped_SessionID)}')
+print(f'total number of anomalous sessions: {len(skip_sessionID) + len(replaced_SessionID) + len(swapped_SessionID)}')
 
-df_anomaly_og = df_raw[df_raw["anomaly"] == 1].copy()
-df_normal = df_raw[df_raw["anomaly"] == 0].copy()
-nr_of_sessions_used = 50000
-injection_rate = nr_of_sessions_used / count_normal_raw
-# injection_amount = int(injection_rate * count_anomaly_raw)
-injection_amount = 50
+all_anomalous_ID = np.concatenate((skip_sessionID, replaced_SessionID, swapped_SessionID), axis=0)
 
-# get 20 random sessionIDs from the anomaly dataset
-anomaly_sessionIDs = random.sample(list(df_anomaly_og["SessionID"].unique()), injection_amount)
-
-df_50k_only_normal = df_normal[df_normal["SessionID"].isin(df_normal["SessionID"].unique()[:nr_of_sessions_used])].copy()
-print(df_50k_only_normal["SessionID"].nunique())
-
-df_50k = df_50k_only_normal.append(df_anomaly_og[df_anomaly_og["SessionID"].isin(anomaly_sessionIDs)]).copy()
-print(df_50k["SessionID"].nunique())
-
-# remove the sessions with ID in anomaly_sessionIDs from the df_anomaly dataset
-# df_anomaly = df_anomaly_og[~df_anomaly_og["SessionID"].isin(anomaly_sessionIDs)].copy()
-
-# df_anomaly.to_csv("gen_sessions/1000/an.csv")
-
-
-# count the number of unique SessionID where anomaly == True
-count_anomaly = df_50k[df_50k["anomaly"] == 1]["SessionID"].nunique()
-count_normal = df_50k[df_50k["anomaly"] == 0]["SessionID"].nunique()
-print(f'Amount of anomalous sessions in the sampled dataset:   {count_anomaly}')
-print(f'Amount of normal sessions in the sampled dataset:      {count_normal}')
-distribution =  count_anomaly / count_normal 
-print(f'Distribution:                                          {distribution * 100} %')
-
-#  Helper function
+# Helper functions:
 
 # function that add a column 'transition' to the df with activity and consecutive
 def create_transition_df(_df:pd.DataFrame) -> pd.DataFrame:
@@ -91,10 +65,28 @@ def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
   df["anomaly"] = df["anomaly"].fillna(0)
   return df
 
-df_trans = create_transition_df(df_50k)
-base_data_1 = transition_count(df_trans)
-base_data = add_anomaly_col(base_data_1, df_anomaly_og)
+print()
+print(f'create base data')
+_base_data = df_raw[~df_raw["SessionID"].isin(all_anomalous_ID)].copy()
+# get first 50000 sessions
+anomaly_df = df_raw[df_raw["SessionID"].isin(all_anomalous_ID)].copy()
 
+_base_data = _base_data[_base_data["SessionID"].isin(_base_data["SessionID"].unique()[:30000])].copy()
+
+
+df_trans = create_transition_df(_base_data)
+_base_data = transition_count(df_trans)
+
+df_trans_an = create_transition_df(anomaly_df)
+base_data__an = transition_count(df_trans_an)
+
+_base_data['anomaly'] = 0
+base_data__an['anomaly'] = 1
+
+
+base_data = pd.concat([_base_data, base_data__an]).fillna(0)
+
+# base_data = add_anomaly_col(base_data_1, df_anomaly_og)
 
 if 'SessionID' in base_data.columns:
   base_data = base_data.drop(columns=["SessionID"])
@@ -104,41 +96,49 @@ def split_data(_df):
   df = _df.copy()
   X = df.drop(columns=["anomaly"])
   y = df["anomaly"]
-  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=99)
+  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=2)
   return X_train, X_test, y_train, y_test
 
 # Base test and train data
 X_train_BASE, X_test_BASE, y_train_BASE, y_test_BASE = split_data(base_data)
-
+print(f'X_train_BASE: {y_train_BASE.sum()}')
+print(f'X_train_BASE: {y_test_BASE.sum()}')
 
 # import the generated sessions:
 ses_amount = 5000
-base_path = f"C:/Users/krdeg/dev/ozp/Swapped/gen_sessions/{str(ses_amount)}/"
+path_swapped = f"C:/Users/krdeg/dev/ozp/Swapped/gen_sessions/{str(ses_amount)}/"
+path_skipped = f"C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/{str(ses_amount)}/"
+path_replaced = f"C:/Users/krdeg/dev/ozp/Replaced/gen_sessions/{str(ses_amount)}/"
 
-gen_sessions_paths = [
-  base_path + f'5_{ses_amount}.csv',
-  base_path + f'10_{ses_amount}.csv',
-  base_path + f'25_{ses_amount}.csv',
-  base_path + f'50_{ses_amount}.csv',
-  base_path + f'75_{ses_amount}.csv',
-  base_path + f'100_{ses_amount}.csv',
-  # base_path + 'an.csv',
-  
-  # base_path + '75_10000.csv',
-  # base_path + '100_10000.csv',
-  # 'C:/Users/krdeg/dev/ozp/Swapped/gen_sessions/only_patterns.csv'
-]
+deviation_paths = [
+    '5_{ses_amount}.csv',
+    '10_{ses_amount}.csv',
+    '25_{ses_amount}.csv',
+    '50_{ses_amount}.csv',
+    '75_{ses_amount}.csv',
+    '100_{ses_amount}.csv']
 
 
-
-
+# function that creates a df with the generated sessions
+def create_df(index:int):
+    swapped = pd.read_csv(path_swapped + deviation_paths[index].format(ses_amount=ses_amount), encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False)
+    swapped['SessionID'] = 'swa' + swapped['SessionID'].astype(str)
+    skipped = pd.read_csv(path_skipped + deviation_paths[index].format(ses_amount=ses_amount), encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False)
+    skipped['SessionID'] = 'skp' + skipped['SessionID'].astype(str)
+    replaced = pd.read_csv(path_replaced + deviation_paths[index].format(ses_amount=ses_amount), encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False)
+    replaced['SessionID'] = 'rpl' + replaced['SessionID'].astype(str)
+    final_df = pd.concat([swapped, skipped, replaced], axis=0)
+    # shuffle the df
+    final_df = final_df.sample(frac=1).reset_index(drop=True)
+    return final_df
     
 res_list = []
 
-for sessions in gen_sessions_paths:
+for index,path in enumerate(deviation_paths):
 
     # build the dataFrame
-    cvs = pd.read_csv(sessions)
+    cvs = create_df(index)
+    
     # check if column Unnamed: 0 exists
     if "Unnamed: 0" in cvs.columns : cvs = cvs.drop(columns=["Unnamed: 0"])
     # rename 
@@ -151,8 +151,6 @@ for sessions in gen_sessions_paths:
 
     ready_df = an_df.copy()
     ready_df['anomaly'] = 1
-    
-    
     
     
     for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
@@ -189,7 +187,7 @@ for sessions in gen_sessions_paths:
         # test_predictions = clf.predict(X_train_extra)
         
         #AUC predict
-        print(sessions, amount_gen)
+        print(path, amount_gen)
         
         acc = accuracy_score(y_true=y_test_BASE,y_pred = predictions)
         print(f'test data accuracy_score: {acc}')
@@ -210,7 +208,7 @@ for sessions in gen_sessions_paths:
         
         res_dict = {}
         
-        res_dict.update({"sessions": sessions,
+        res_dict.update({"sessions": path,
                          'amount_gen': amount_gen,
                          'accuracy_score': acc,
                          'ball_acc': ball_acc,
@@ -224,9 +222,7 @@ for sessions in gen_sessions_paths:
         
         print()
         res_list.append(res_dict)
-    
-    
+        
 res_df = pd.DataFrame(res_list)
 
-res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Swapped/results/new_res.csv")
-  
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/all_patterns/all_patterns_result.csv")
