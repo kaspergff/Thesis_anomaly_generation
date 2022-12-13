@@ -14,7 +14,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from sklearn.metrics import classification_report
 
-df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Swapped/labeled_data/Swapped.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Swapped/labeled_data/Swapped_Sample.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
                     usecols=['SessionID','Activity','anomaly'])
 
 df_raw["anomaly"] = df_raw["anomaly"].astype(int)
@@ -35,7 +35,7 @@ df_anomaly_og = df_raw[df_raw["anomaly"] == 1].copy()
 df_normal = df_raw[df_raw["anomaly"] == 0].copy()
 nr_of_sessions_used = 50000
 injection_rate = nr_of_sessions_used / count_normal_raw
-# injection_amount = int(injection_rate * count_anomaly_raw)
+injection_amount = int(injection_rate * count_anomaly_raw)
 injection_amount = 50
 
 # get 20 random sessionIDs from the anomaly dataset
@@ -104,7 +104,7 @@ def split_data(_df):
   df = _df.copy()
   X = df.drop(columns=["anomaly"])
   y = df["anomaly"]
-  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=99)
+  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=1)
   return X_train, X_test, y_train, y_test
 
 # Base test and train data
@@ -228,5 +228,5 @@ for sessions in gen_sessions_paths:
     
 res_df = pd.DataFrame(res_list)
 
-res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Swapped/results/new_res.csv")
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Swapped/results/sample_new.csv")
   

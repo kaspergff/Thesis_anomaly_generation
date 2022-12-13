@@ -14,7 +14,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from sklearn.metrics import classification_report
 
-df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Skipping/labeled_data/skipping.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
+df_raw = pd.read_csv("C:/Users/krdeg/dev/ozp/Skipping/labeled_data/Skipped_Sample.csv", encoding_errors="ignore", on_bad_lines='error', sep=",", index_col=False,
                     usecols=['SessionID','Activity','anomaly'])
 
 df_raw["anomaly"] = df_raw["anomaly"].astype(int)
@@ -29,18 +29,21 @@ distribution =  count_anomaly_raw / count_normal_raw
 print(f'Distribution:                                  {distribution * 100} %')
 
 import random
-random.seed(101)
+random.seed(0)
 
 df_anomaly_og = df_raw[df_raw["anomaly"] == 1].copy()
 df_normal = df_raw[df_raw["anomaly"] == 0].copy()
 nr_of_sessions_used = 50000
 injection_rate = nr_of_sessions_used / count_normal_raw
-# injection_amount = int(injection_rate * count_anomaly_raw)
-injection_amount = count_anomaly_raw
+injection_amount = int(injection_rate * count_anomaly_raw)
+# injection_amount = count_anomaly_raw
+# injection_amount = 50
+
+
 
 # get 20 random sessionIDs from the anomaly dataset
 anomaly_sessionIDs = random.sample(list(df_anomaly_og["SessionID"].unique()), injection_amount)
-
+print(f'len test: {len(anomaly_sessionIDs)}')
 df_50k_only_normal = df_normal[df_normal["SessionID"].isin(df_normal["SessionID"].unique()[:nr_of_sessions_used])].copy()
 print(df_50k_only_normal["SessionID"].nunique())
 
@@ -104,7 +107,8 @@ def split_data(_df):
   df = _df.copy()
   X = df.drop(columns=["anomaly"])
   y = df["anomaly"]
-  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42)
+  # X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42)
+  X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=1)
   return X_train, X_test, y_train, y_test
 
 # Base test and train data
@@ -115,17 +119,17 @@ ses_amount = 5000
 base_path = f"C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/{str(ses_amount)}/"
 
 gen_sessions_paths = [
-  # base_path + f'5_{ses_amount}.csv',
-  # base_path + f'10_{ses_amount}.csv',
-  # base_path + f'25_{ses_amount}.csv',
-  # base_path + f'50_{ses_amount}.csv',
-  # base_path + f'75_{ses_amount}.csv',
-  # base_path + f'100_{ses_amount}.csv',
+  base_path + f'5_{ses_amount}.csv',
+  base_path + f'10_{ses_amount}.csv',
+  base_path + f'25_{ses_amount}.csv',
+  base_path + f'50_{ses_amount}.csv',
+  base_path + f'75_{ses_amount}.csv',
+  base_path + f'100_{ses_amount}.csv',
   # base_path + 'an.csv',
   
   # base_path + '75_10000.csv',
   # base_path + '100_10000.csv',
-  'C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/only_patterns.csv'
+  # 'C:/Users/krdeg/dev/ozp/Skipping/gen_sessions/only_patterns.csv'
 ]
     
 res_list = []
@@ -150,7 +154,7 @@ for sessions in gen_sessions_paths:
     
     
     
-    for amount_gen in [30]:
+    for amount_gen in [0,50,100,250,500,750,1000,2500,5000]:
         
         if amount_gen != 0 : 
           df_gen = ready_df.head(amount_gen)
@@ -223,5 +227,5 @@ for sessions in gen_sessions_paths:
     
 res_df = pd.DataFrame(res_list)
 
-res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Skipping/results/transition_only_patterns.csv")
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/Skipping/results/sample.csv")
   

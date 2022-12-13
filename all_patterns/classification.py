@@ -53,7 +53,7 @@ def create_transition_df(_df:pd.DataFrame) -> pd.DataFrame:
 def transition_count(_df):
   # function that counts the number of times a all transitions occurs in a session
   df = _df.copy()
-  df = df.groupby("SessionID")["transition"].value_counts().unstack().fillna(0)
+  df = df.groupby("SessionID")["Activity"].value_counts().unstack().fillna(0)
   return df
   
 def add_anomaly_col(_df:pd.DataFrame, _df_anomaly:pd.DataFrame) -> pd.DataFrame:
@@ -75,9 +75,11 @@ _base_data = _base_data[_base_data["SessionID"].isin(_base_data["SessionID"].uni
 
 
 df_trans = create_transition_df(_base_data)
+# df_trans = _base_data
 _base_data = transition_count(df_trans)
 
 df_trans_an = create_transition_df(anomaly_df)
+# df_trans_an = anomaly_df
 base_data__an = transition_count(df_trans_an)
 
 _base_data['anomaly'] = 0
@@ -112,11 +114,12 @@ path_replaced = f"C:/Users/krdeg/dev/ozp/Replaced/gen_sessions/{str(ses_amount)}
 
 deviation_paths = [
     '5_{ses_amount}.csv',
-    '10_{ses_amount}.csv',
-    '25_{ses_amount}.csv',
-    '50_{ses_amount}.csv',
-    '75_{ses_amount}.csv',
-    '100_{ses_amount}.csv']
+    # '10_{ses_amount}.csv',
+    # '25_{ses_amount}.csv',
+    # '50_{ses_amount}.csv',
+    # '75_{ses_amount}.csv',
+    # '100_{ses_amount}.csv'
+    ]
 
 
 # function that creates a df with the generated sessions
@@ -145,6 +148,7 @@ for index,path in enumerate(deviation_paths):
     cvs = cvs.rename(columns={'URL_FILE':'Activity'})
     
     df_trans_an = create_transition_df(cvs)
+    # df_trans_an = cvs
     an_df = transition_count(df_trans_an)
     if 'SessionID' in an_df.index:
         an_df = an_df.drop(index=["SessionID"])
@@ -225,4 +229,4 @@ for index,path in enumerate(deviation_paths):
         
 res_df = pd.DataFrame(res_list)
 
-res_df.to_csv(f"C:/Users/krdeg/dev/ozp/all_patterns/all_patterns_result.csv")
+res_df.to_csv(f"C:/Users/krdeg/dev/ozp/all_patterns/patt.csv")
